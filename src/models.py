@@ -50,6 +50,15 @@ class SetModel(QtCore.QAbstractListModel):
         return len(self.sets)
 
 
+def append_word_pairs(title, rows):
+    _set = Set.select().where(Set.title == title).get()
+
+    for row in rows:
+        new_wordpair = WordPair(original=row[0], translation=row[1], set=_set)
+
+        new_wordpair.save()
+
+
 if __name__ == '__main__':
     db.connect()
     db.create_tables([Set, WordPair])
