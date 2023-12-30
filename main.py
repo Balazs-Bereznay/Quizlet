@@ -1,7 +1,7 @@
 from PySide6 import QtCore, QtWidgets, QtGui
 from src.mainwindow import Ui_MainWindow as Ui_Dashboard
 from src.newset import Ui_MainWindow as Ui_NewSet
-from src.models import Set, WordPair, SetModel, append_word_pairs
+from src.models import Set, WordPair, SetModel
 
 
 class Dashboard(QtWidgets.QMainWindow, Ui_Dashboard):
@@ -39,7 +39,7 @@ class Dashboard(QtWidgets.QMainWindow, Ui_Dashboard):
         self.new_set_window = NewSetWindow()
 
         self.new_set_window.exit_button.clicked.connect(self.return_button_clicked)
-        self.new_set_window.save_button.clicked.connect(self.create_button_clicked)
+        self.new_set_window.save_button.clicked.connect(self.save_button_clicked)
 
         self.new_set_window.show()
 
@@ -52,12 +52,14 @@ class Dashboard(QtWidgets.QMainWindow, Ui_Dashboard):
     def delete_clicked(self):
         print("delete")
 
+# Event handlers for buttons not on the main page
     def return_button_clicked(self):
         self.new_button.setEnabled(True)
         self.new_set_window.close()
 
-    def create_button_clicked(self):
+    def save_button_clicked(self):
         self.new_button.setEnabled(True)
+        self.model.layoutChanged.emit()
 
 
 class NewSetWindow(QtWidgets.QMainWindow, Ui_NewSet):
@@ -82,6 +84,7 @@ class NewSetWindow(QtWidgets.QMainWindow, Ui_NewSet):
         self.append_button.clicked.connect(self.append_button_clicked)
         self.modify_button.clicked.connect(self.modify_button_clicked)
         self.delete_button.clicked.connect(self.delete_button_clicked)
+        self.save_button.clicked.connect(self.save_button_clicked)
 
     def append_button_clicked(self):
         word = self.word_edit.text()
@@ -128,6 +131,9 @@ class NewSetWindow(QtWidgets.QMainWindow, Ui_NewSet):
         self.tableView.model().setData(self.tableView.model().index(row, 0), self.word_edit.text())
         self.tableView.model().setData(self.tableView.model().index(row, 1), self.translation_edit.text())
 
+        self.word_edit.clear()
+        self.translation_edit.clear()
+
     def delete_button_clicked(self):
         row = self.tableView.currentIndex().row()
 
@@ -135,6 +141,19 @@ class NewSetWindow(QtWidgets.QMainWindow, Ui_NewSet):
 
         self.word_edit.clear()
         self.translation_edit.clear()
+
+    def save_button_clicked(self):
+        new_set = Set(title=self.title_edit.text())
+        new_set.save()
+
+        for i in range(self.tableView.model().rowCount()):
+            word = self.tableView.model().index(i, 0).data()
+            translation = self.tableView.model().index(i, 1).data()
+
+            new_pair = WordPair(original=word, translation=translation, set=new_set.id)
+            new_pair.save()
+
+        self.close()
 
 
 if __name__ == "__main__":

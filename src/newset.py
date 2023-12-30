@@ -20,7 +20,6 @@ from PySide6.QtWidgets import (QAbstractItemView, QApplication, QHBoxLayout, QHe
     QSizePolicy, QSpacerItem, QTableView, QVBoxLayout,
     QWidget)
 
-
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
@@ -499,6 +498,7 @@ class Ui_MainWindow(object):
         self.append_button.setMinimumSize(QSize(0, 40))
         self.append_button.setFocusPolicy(Qt.NoFocus)
         self.append_button.setStyleSheet(u"font: 16pt \"MS Sans Serif\";")
+        self.append_button.setAutoDefault(True)
 
         self.verticalLayout.addWidget(self.append_button)
 
@@ -602,6 +602,9 @@ class Ui_MainWindow(object):
         MainWindow.setCentralWidget(self.centralwidget)
 
         self.retranslateUi(MainWindow)
+
+        self.append_button.setDefault(False)
+
 
         QMetaObject.connectSlotsByName(MainWindow)
     # setupUi
