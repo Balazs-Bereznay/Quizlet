@@ -81,6 +81,7 @@ class NewSetWindow(QtWidgets.QMainWindow, Ui_NewSet):
 
         self.append_button.clicked.connect(self.append_button_clicked)
         self.modify_button.clicked.connect(self.modify_button_clicked)
+        self.delete_button.clicked.connect(self.delete_button_clicked)
 
     def append_button_clicked(self):
         word = self.word_edit.text()
@@ -126,6 +127,14 @@ class NewSetWindow(QtWidgets.QMainWindow, Ui_NewSet):
 
         self.tableView.model().setData(self.tableView.model().index(row, 0), self.word_edit.text())
         self.tableView.model().setData(self.tableView.model().index(row, 1), self.translation_edit.text())
+
+    def delete_button_clicked(self):
+        row = self.tableView.currentIndex().row()
+
+        self.tableView.model().removeRow(row)
+
+        self.word_edit.clear()
+        self.translation_edit.clear()
 
 
 if __name__ == "__main__":
