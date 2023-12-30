@@ -4,7 +4,7 @@ from PySide6 import QtCore
 from PySide6.QtCore import Qt
 
 basedir = os.path.abspath(os.path.dirname(__file__))
-db = SqliteDatabase(os.path.join(basedir, 'db.sqlite'))
+db = SqliteDatabase(os.path.join(basedir, 'db.sqlite'), pragmas={'foreign_keys': 1})
 
 
 class Set(Model):
@@ -20,7 +20,7 @@ class WordPair(Model):
     id = PrimaryKeyField(null=False)
     original = CharField()
     translation = CharField()
-    set = ForeignKeyField(Set, backref='wordpairs')
+    set = ForeignKeyField(Set, backref='wordpairs', on_delete='CASCADE')
 
     class Meta:
         database = db
