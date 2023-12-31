@@ -33,7 +33,7 @@ class Dashboard(QtWidgets.QMainWindow, Ui_Dashboard):
 
         if self.sets is not None:
             for _set in self.sets:
-                self.model.sets.append((_set.id, _set.title.title()))
+                self.model.sets.append((_set.id, _set.title))
 
             self.model.layoutChanged.emit()
 
@@ -83,7 +83,8 @@ class Dashboard(QtWidgets.QMainWindow, Ui_Dashboard):
 
         if self.sets is not None:
             for _set in self.sets:
-                self.model.sets.append((_set.id, _set.title.title()))
+                if (_set.id, _set.title) not in self.model.sets:
+                    self.model.sets.append((_set.id, _set.title))
 
         self.model.layoutChanged.emit()
 
@@ -205,12 +206,12 @@ class ModifyWindow(QtWidgets.QMainWindow, Ui_Modify):
         self.row_memory = None
         self.tableView.clicked.connect(self.row_clicked)
 
-        _set = Set.get_by_id(set_id)
+        self._set = Set.get_by_id(set_id)
 
-        self.label_4.setText(_set.title)
+        self.label_4.setText(self._set.title)
         self.label_4.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
 
-        for wordpair in _set.wordpairs:
+        for wordpair in self._set.wordpairs:
             word = wordpair.original
             translation = wordpair.translation
 
@@ -284,13 +285,35 @@ class ModifyWindow(QtWidgets.QMainWindow, Ui_Modify):
         self.translation_edit.clear()
 
     def save_button_clicked(self):
-        # TODO: update wordpairs
+        wordpairs = [(x.id, x.original, x.translation) for x in self._set.wordpairs]
+
+        updated_wordpairs = []
+
+        for i in range(self.tableView.model().rowCount()):
+            word = self.tableView.model().index(i, 0).data()
+            translation = self.tableView.model().index(i, 1).data()
+
+            updated_wordpairs.append((word, translation))
+
+        print(wordpairs, updated_wordpairs)
+
+        for pair in wordpairs:
+            if pair[1:] not in updated_wordpairs:
+                WordPair.delete_by_id(pair[0])
+
+            else:
+                del updated_wordpairs[updated_wordpairs.index(pair[1:])]
+
+        for pair in updated_wordpairs:
+
+            new_wordpair = WordPair(original=pair[0], translation=pair[1], set=self._set.id)
+
+            new_wordpair.save()
 
         self.close()
 
     def exit_button_clicked(self):
         self.close()
-
 
 
 if __name__ == "__main__":
