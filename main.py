@@ -1,9 +1,9 @@
 from PySide6 import QtCore, QtWidgets, QtGui
-from PySide6.QtWidgets import QMainWindow
 
 from src.mainwindow import Ui_MainWindow as Ui_Dashboard
 from src.newset import Ui_MainWindow as Ui_NewSet
 from src.modify import Ui_MainWindow as Ui_Modify
+from src.flashcards import Ui_MainWindow as Ui_Flashcards
 from src.models import Set, WordPair, SetModel
 
 
@@ -22,6 +22,7 @@ class Dashboard(QtWidgets.QMainWindow, Ui_Dashboard):
 
         self.new_set_window = None
         self.modify_window = None
+        self.flashcard_window = None
 
         self.model = SetModel()
         self.set_list_view.setModel(self.model)
@@ -48,7 +49,13 @@ class Dashboard(QtWidgets.QMainWindow, Ui_Dashboard):
         self.new_set_window.show()
 
     def open_clicked(self):
-        print("open")
+        index = self.set_list_view.selectedIndexes()[0]
+
+        set_id = self.model.itemData(index)[2]
+
+        self.flashcard_window = FlashCardsWindow(set_id)
+        self.flashcard_window.show()
+
 
     def modify_clicked(self):
         index = self.set_list_view.selectedIndexes()[0]
@@ -314,6 +321,69 @@ class ModifyWindow(QtWidgets.QMainWindow, Ui_Modify):
 
     def exit_button_clicked(self):
         self.close()
+
+
+class FlashCardsWindow(QtWidgets.QMainWindow, Ui_Flashcards):
+    def __init__(self, set_id):
+        super(FlashCardsWindow, self).__init__()
+
+        self.setupUi(self)
+        self.setWindowTitle("Szókártyák")
+
+        self.query = WordPair.select().join(Set).where(Set.id == set_id)
+        self.wordpairs = []
+        [self.wordpairs.append(pair) for pair in self.query]
+
+        self.card_widget.installEventFilter(self)
+        self.previous_button.setDisabled(True)
+        self.word_counter = 0
+        self.flipped = False
+        self.word_label.setText(self.wordpairs[0].original)
+
+        self.next_button.clicked.connect(self.next_button_clicked)
+        self.previous_button.clicked.connect(self.previous_button_clicked)
+
+    def eventFilter(self, watched, event):
+        if event.type() == QtCore.QEvent.Type.MouseButtonPress and event.buttons() == QtCore.Qt.MouseButton.LeftButton:
+            self.flashcard_clicked()
+
+        return super().eventFilter(watched, event)
+
+    def flashcard_clicked(self):
+        if not self.flipped:
+            self.word_label.setText(self.wordpairs[self.word_counter].translation)
+            self.flipped = True
+
+        else:
+            self.word_label.setText(self.wordpairs[self.word_counter].original)
+            self.flipped = False
+
+    def next_button_clicked(self):
+        if len(self.wordpairs) > self.word_counter + 1:
+            if self.word_counter == 0:
+                self.previous_button.setDisabled(False)
+            self.word_counter += 1
+            self.word_label.setText(self.wordpairs[self.word_counter].original)
+
+        if len(self.wordpairs) == self.word_counter + 1:
+            self.next_button.setDisabled(True)
+
+    def previous_button_clicked(self):
+        if self.word_counter - 1 >= 0:
+            if self.word_counter == len(self.wordpairs) - 1:
+                self.next_button.setDisabled(False)
+
+            self.word_counter -= 1
+            self.word_label.setText(self.wordpairs[self.word_counter].original)
+
+        if self.word_counter == 0:
+            self.previous_button.setDisabled(True)
+
+    def learn_button_clicked(self):
+        pass
+
+    def test_button_clicked(self):
+        pass
 
 
 if __name__ == "__main__":
